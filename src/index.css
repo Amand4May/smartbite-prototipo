@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+@layer base {
+  :root {
+    --background: 120 15% 97%;
+    --foreground: 120 10% 12%;
+
+    --card: 120 12% 99%;
+    --card-foreground: 120 10% 12%;
+
+    --popover: 120 12% 99%;
+    --popover-foreground: 120 10% 12%;
+
+    --primary: 122 39% 49%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 120 12% 93%;
+    --secondary-foreground: 120 10% 25%;
+
+    --muted: 120 8% 94%;
+    --muted-foreground: 120 5% 46%;
+
+    --accent: 36 70% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 4 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 120 10% 88%;
+    --input: 120 10% 88%;
+    --ring: 122 39% 49%;
+
+    --radius: 0.75rem;
+
+    --success: 122 39% 49%;
+    --success-foreground: 0 0% 100%;
+    --warning: 40 85% 55%;
+    --warning-foreground: 40 30% 10%;
+    --info: 205 60% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 122 25% 16%;
+    --sidebar-foreground: 120 15% 90%;
+    --sidebar-primary: 122 39% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 122 18% 22%;
+    --sidebar-accent-foreground: 120 15% 90%;
+    --sidebar-border: 122 14% 24%;
+    --sidebar-ring: 122 39% 49%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer utilities {
+  .status-online {
+    @apply bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))];
+  }
+  .status-offline {
+    @apply bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))];
+  }
+  .status-warning {
+    @apply bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))];
+  }
+}
