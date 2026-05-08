@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { Mail, Lock, Trash2, Edit2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, Trash2, Edit2, Eye, EyeOff, AlertTriangle, ArrowLeft } from 'lucide-react';
 
 interface User {
   id: string;
@@ -18,9 +18,10 @@ interface AccountSettingsProps {
   user: User;
   onLogout: () => void;
   onUserUpdate: (user: User) => void;
+  onGoBack: () => void;
 }
 
-export const AccountSettings = ({ user, onLogout, onUserUpdate }: AccountSettingsProps) => {
+export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: AccountSettingsProps) => {
   const [editingEmail, setEditingEmail] = useState(false);
   const [editingPassword, setEditingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -103,6 +104,17 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate }: AccountSetting
 
   return (
     <div className="space-y-6">
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={onGoBack}
+        className="flex items-center gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
+      </Button>
+
       {/* Profile Card */}
       <Card>
         <CardHeader>

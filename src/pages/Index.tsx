@@ -98,18 +98,16 @@ const Index = () => {
   // Header compartilhado
   const renderHeader = () => (
     <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-md">
-      <div className="mx-auto max-w-2xl px-4 py-3 flex items-center justify-between">
-        <button 
-          onClick={() => setTab('dashboard')} 
-          className="flex flex-col gap-0.5 hover:opacity-80 transition-opacity cursor-pointer"
+      <div className="mx-auto max-w-2xl px-4 py-4 flex items-center justify-between">
+        <button
+          onClick={() => setTab('dashboard')}
+          className="flex flex-col items-start gap-1 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-sm font-bold text-primary-foreground">S</span>
-            </div>
-            <h1 className="text-lg font-bold text-foreground leading-tight">SmartBite</h1>
+          <div className="flex items-center gap-1">
+            <img src="/logos/smartbite-logo.png" alt="SmartBite" className="h-10 w-auto" />
+            <h1 className="text-2xl font-bold text-foreground leading-tight">SmartBite</h1>
           </div>
-          <p className="text-xs text-muted-foreground ml-1">Bem-vindo, {user?.name}!</p>
+          <p className="text-sm text-muted-foreground mt-1">Bem-vindo, {user?.name}!</p>
         </button>
         <div className="flex items-center gap-2">
           {tab === 'dashboard' && (
@@ -149,6 +147,7 @@ const Index = () => {
             user={user} 
             onLogout={handleLogout} 
             onUserUpdate={handleUserUpdate}
+            onGoBack={() => setTab('dashboard')}
           />
         </div>
       </div>
