@@ -119,7 +119,7 @@ export function FeederControl({ pets }: FeederControlProps) {
   const feedBtnVariant = feedState === 'success' ? 'outline' : feedState === 'error' ? 'destructive' : 'default';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 border-2 border-gray-200 rounded-lg p-4">
       {/* Pet selector */}
       <div className="flex gap-2 flex-wrap">
         {pets.map(p => (

@@ -31,7 +31,7 @@ export function FeederStatusCard({ status }: FeederStatusCardProps) {
   const motor = motorLabels[status.motorStatus];
 
   return (
-    <div className="rounded-xl bg-card p-5 shadow-sm space-y-4">
+    <div className="rounded-xl bg-card p-5 shadow-sm space-y-4 border-2 border-gray-200">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-foreground">Status do Alimentador</h3>
         <div className="flex items-center gap-1.5">

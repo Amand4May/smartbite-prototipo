@@ -30,7 +30,7 @@ export function PetCard({ pet, selected, onClick, onDelete }: PetCardProps) {
         'hover:shadow-md active:scale-[0.98]',
         selected
           ? 'border-primary bg-primary/5 shadow-md'
-          : 'border-transparent bg-card shadow-sm hover:border-primary/20'
+          : 'border-gray-200 bg-card shadow-sm hover:border-primary/20'
       )}
     >
       <div className="flex items-start gap-3">

@@ -58,7 +58,7 @@ export function AlertsPanel({ alerts: initialAlerts }: AlertsPanelProps) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 border-2 border-gray-200 rounded-lg p-4">
       <h3 className="font-semibold text-foreground">Alertas</h3>
       {visibleAlerts.map((alert) => {
         const Icon = alertIcons[alert.type] ?? Info;
@@ -66,7 +66,7 @@ export function AlertsPanel({ alerts: initialAlerts }: AlertsPanelProps) {
         return (
           <div
             key={alert.id}
-            className={`flex items-start gap-3 rounded-xl border-l-4 ${style.border} ${style.bg} bg-card p-4 shadow-sm transition-opacity ${alert.read ? 'opacity-60' : ''}`}
+            className={`flex items-start gap-3 rounded-xl border-l-4 border-2 border-gray-200 ${style.border} ${style.bg} bg-card p-4 shadow-sm transition-opacity ${alert.read ? 'opacity-60' : ''}`}
           >
             <div className={`rounded-lg p-2 ${style.icon}`}>
               <Icon className="h-4 w-4" />

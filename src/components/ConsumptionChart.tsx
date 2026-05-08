@@ -23,7 +23,7 @@ export function ConsumptionChart({ data }: ConsumptionChartProps) {
       : `✅ Consumo dentro do esperado esta semana`;
 
   return (
-    <div className="rounded-xl bg-card p-5 shadow-sm">
+    <div className="rounded-xl bg-card p-5 shadow-sm border-2 border-gray-200">
       <div className="flex items-center justify-between mb-1">
         <h3 className="font-semibold text-foreground">Consumo Semanal (g)</h3>
         <span className="text-xs font-medium text-muted-foreground tabular-nums">Média: {avg}g</span>

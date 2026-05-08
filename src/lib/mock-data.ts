@@ -9,13 +9,33 @@ function calcRecommended(pet: Pet): number {
 
 export const mockPets: Pet[] = [
   {
-    id: '1', name: 'Thor', species: 'dog', breed: 'Golden Retriever',
+    id: '1', name: 'Athena', species: 'dog', breed: 'Golden Retriever',
     weight: 32, age: 4, activityLevel: 'high', feedingGoal: 'maintenance',
     avatarEmoji: '🐕', dailyRecommendedGrams: 0,
   },
   {
-    id: '2', name: 'Luna', species: 'cat', breed: 'Siamês',
-    weight: 4.5, age: 2, activityLevel: 'moderate', feedingGoal: 'maintenance',
+    id: '2', name: 'Thor', species: 'dog', breed: 'Pug',
+    weight: 9, age: 3, activityLevel: 'moderate', feedingGoal: 'maintenance',
+    avatarEmoji: '🐕', dailyRecommendedGrams: 0,
+  },
+  {
+    id: '3', name: 'Amora', species: 'dog', breed: 'Yorkshire',
+    weight: 3.5, age: 2, activityLevel: 'high', feedingGoal: 'maintenance',
+    avatarEmoji: '🐕', dailyRecommendedGrams: 0,
+  },
+  {
+    id: '4', name: 'Gordo', species: 'dog', breed: 'Maltês',
+    weight: 4, age: 5, activityLevel: 'low', feedingGoal: 'weight_loss',
+    avatarEmoji: '🐕', dailyRecommendedGrams: 0,
+  },
+  {
+    id: '5', name: 'Teddy', species: 'dog', breed: 'Shih Tzu',
+    weight: 5.5, age: 2, activityLevel: 'moderate', feedingGoal: 'maintenance',
+    avatarEmoji: '🐕', dailyRecommendedGrams: 0,
+  },
+  {
+    id: '6', name: 'Wendy', species: 'cat', breed: 'Siamês',
+    weight: 3.5, age: 3, activityLevel: 'moderate', feedingGoal: 'maintenance',
     avatarEmoji: '🐱', dailyRecommendedGrams: 0,
   },
 ];
@@ -40,8 +60,12 @@ export const mockFeedingHistory: FeedingRecord[] = [
   { id: 'f2', petId: '1', timestamp: new Date(now - 11 * 3600000), amountGrams: 200, type: 'scheduled' },
   { id: 'f3', petId: '2', timestamp: new Date(now - 5 * 3600000), amountGrams: 60, type: 'manual' },
   { id: 'f4', petId: '1', timestamp: new Date(now - 27 * 3600000), amountGrams: 180, type: 'scheduled' },
-  { id: 'f5', petId: '2', timestamp: new Date(now - 29 * 3600000), amountGrams: 55, type: 'scheduled' },
+  { id: 'f5', petId: '3', timestamp: new Date(now - 29 * 3600000), amountGrams: 25, type: 'scheduled' },
   { id: 'f6', petId: '1', timestamp: new Date(now - 35 * 3600000), amountGrams: 200, type: 'scheduled' },
+  { id: 'f7', petId: '4', timestamp: new Date(now - 4 * 3600000), amountGrams: 30, type: 'scheduled' },
+  { id: 'f8', petId: '5', timestamp: new Date(now - 8 * 3600000), amountGrams: 40, type: 'scheduled' },
+  { id: 'f9', petId: '6', timestamp: new Date(now - 2 * 3600000), amountGrams: 50, type: 'scheduled' },
+  { id: 'f10', petId: '6', timestamp: new Date(now - 14 * 3600000), amountGrams: 50, type: 'scheduled' },
 ];
 
 export const mockSchedules: FeedingSchedule[] = [
@@ -49,22 +73,28 @@ export const mockSchedules: FeedingSchedule[] = [
   { id: 's2', petId: '1', time: '18:00', amountGrams: 180, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
   { id: 's3', petId: '2', time: '08:00', amountGrams: 60, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
   { id: 's4', petId: '2', time: '19:00', amountGrams: 55, enabled: false, days: [1, 2, 3, 4, 5] },
+  { id: 's5', petId: '3', time: '09:00', amountGrams: 25, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: 's6', petId: '4', time: '12:00', amountGrams: 30, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: 's7', petId: '5', time: '07:00', amountGrams: 40, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: 's8', petId: '5', time: '18:30', amountGrams: 40, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: 's9', petId: '6', time: '08:00', amountGrams: 50, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
+  { id: 's10', petId: '6', time: '20:00', amountGrams: 50, enabled: true, days: [0, 1, 2, 3, 4, 5, 6] },
 ];
 
 export const mockAlerts: Alert[] = [
   { id: 'a1', type: 'food_low', severity: 'warning', message: 'Nível de ração abaixo de 30%. Reabasteça em breve.', timestamp: new Date(now - 2 * 3600000), read: false, dismissed: false },
-  { id: 'a2', type: 'pet_not_eating', severity: 'critical', message: 'Luna não comeu nas últimas 12 horas.', timestamp: new Date(now - 6 * 3600000), read: false, dismissed: false },
-  { id: 'a3', type: 'feeding_below', severity: 'info', message: 'Thor comeu 8% abaixo do recomendado ontem.', timestamp: new Date(now - 18 * 3600000), read: false, dismissed: false },
+  { id: 'a2', type: 'pet_not_eating', severity: 'critical', message: 'Gordo não comeu nas últimas 12 horas.', timestamp: new Date(now - 6 * 3600000), read: false, dismissed: false },
+  { id: 'a3', type: 'feeding_below', severity: 'info', message: 'Athena comeu 8% abaixo do recomendado ontem.', timestamp: new Date(now - 18 * 3600000), read: false, dismissed: false },
 ];
 
 export const mockDailyConsumption: DailyConsumption[] = [
-  { date: 'Seg', recommended: 380, served: 350 },
-  { date: 'Ter', recommended: 380, served: 400 },
-  { date: 'Qua', recommended: 380, served: 370 },
-  { date: 'Qui', recommended: 380, served: 310 },
-  { date: 'Sex', recommended: 380, served: 390 },
-  { date: 'Sáb', recommended: 380, served: 340 },
-  { date: 'Dom', recommended: 380, served: 375 },
+  { date: 'Seg', recommended: 480, served: 450 },
+  { date: 'Ter', recommended: 480, served: 500 },
+  { date: 'Qua', recommended: 480, served: 470 },
+  { date: 'Qui', recommended: 480, served: 410 },
+  { date: 'Sex', recommended: 480, served: 490 },
+  { date: 'Sáb', recommended: 480, served: 440 },
+  { date: 'Dom', recommended: 480, served: 475 },
 ];
 
 // Helper to get today's consumed amount for a pet

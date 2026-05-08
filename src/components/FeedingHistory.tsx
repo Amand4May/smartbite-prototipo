@@ -11,7 +11,7 @@ export function FeedingHistory({ records }: FeedingHistoryProps) {
   const sorted = [...records].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
   return (
-    <div className="rounded-xl bg-card p-5 shadow-sm">
+    <div className="rounded-xl bg-card p-5 shadow-sm border-2 border-gray-200">
       <h3 className="font-semibold text-foreground mb-3">Histórico de Alimentação</h3>
       <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
         {sorted.map((r) => {
