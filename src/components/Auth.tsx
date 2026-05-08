@@ -104,9 +104,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
       <Card className="w-full max-w-md shadow-2xl relative z-10">
         <CardHeader className="space-y-2 text-center">
           <div className="flex justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-foreground">S</span>
-            </div>
+            <img src="/logos/smartbite-logo.png" alt="SmartBite" className="h-16 w-auto" />
           </div>
           <CardTitle className="text-2xl">SmartBite</CardTitle>
           <CardDescription>Gerenciador inteligente de alimentação de animais</CardDescription>

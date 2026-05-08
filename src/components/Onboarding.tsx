@@ -51,9 +51,7 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-4 text-center">
             <div className="flex justify-center">
-              <div className="h-16 w-16 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-2xl font-bold text-primary-foreground">S</span>
-              </div>
+              <img src="/logos/smartbite-logo.png" alt="SmartBite" className="h-20 w-auto" />
             </div>
             <div className="space-y-2">
               <CardTitle className="text-2xl">Bem-vindo ao SmartBite!</CardTitle>
