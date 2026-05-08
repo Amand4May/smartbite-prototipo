@@ -90,6 +90,9 @@ function toPet(data: any): Pet {
     age: Number(data.age),
     activityLevel: data.activity_level,
     feedingGoal: data.feeding_goal,
+    isNeutered: !!data.is_neutered,
+    bodyCondition: data.body_condition,
+    breedFactor: data.breed_factor ? Number(data.breed_factor) : 1.0,
     avatarEmoji: data.avatar_emoji,
     dailyRecommendedGrams: data.daily_recommended_grams,
     createdAt: data.created_at,
@@ -105,6 +108,9 @@ function fromPet(pet: Omit<Pet, 'id' | 'avatarEmoji' | 'dailyRecommendedGrams' |
     age: pet.age,
     activity_level: pet.activityLevel,
     feeding_goal: pet.feedingGoal,
+    is_neutered: (pet as any).is_neutered ?? (pet as any).isNeutered ?? false,
+    body_condition: (pet as any).body_condition ?? (pet as any).bodyCondition ?? 'ideal',
+    breed_factor: (pet as any).breed_factor ?? (pet as any).breedFactor ?? 1.0,
     avatar_emoji: pet.species === 'dog' ? '🐕' : '🐱',
   };
 }
@@ -226,6 +232,9 @@ export const api = {
         age: updates.age,
         activity_level: updates.activityLevel,
         feeding_goal: updates.feedingGoal,
+        is_neutered: (updates as any).isNeutered ?? (updates as any).is_neutered,
+        body_condition: (updates as any).bodyCondition ?? (updates as any).body_condition,
+        breed_factor: (updates as any).breedFactor ?? (updates as any).breed_factor,
       }),
     })),
 

@@ -190,35 +190,37 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
       {/* Manual feed */}
       <div className="rounded-xl bg-card p-5 shadow-sm space-y-4">
         <h3 className="font-semibold text-foreground">Alimentação Manual</h3>
-        <div className="flex items-end gap-3">
-          <div className="flex-1">
-            <label className="text-sm text-muted-foreground mb-1 block">Quantidade (g)</label>
-            <input
-              type="number"
-              min={10}
-              max={500}
-              step={10}
-              value={manualAmount}
-              onChange={e => handleAmountChange(Number(e.target.value))}
-              className={`w-full rounded-lg border px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-ring bg-background ${amountError ? 'border-[hsl(var(--destructive))] focus:ring-[hsl(var(--destructive))]' : ''}`}
-            />
-            {amountError && <p className="text-xs text-[hsl(var(--destructive))] mt-1">{amountError}</p>}
-            <button
-              type="button"
-              onClick={() => handleAmountChange(suggestedAmount)}
-              className="text-xs text-primary hover:underline mt-1"
+        <div className="space-y-2">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="text-sm text-muted-foreground mb-1 block">Quantidade (g)</label>
+              <input
+                type="number"
+                min={10}
+                max={500}
+                step={10}
+                value={manualAmount}
+                onChange={e => handleAmountChange(Number(e.target.value))}
+                className={`w-full rounded-lg border px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-ring bg-background ${amountError ? 'border-[hsl(var(--destructive))] focus:ring-[hsl(var(--destructive))]' : ''}`}
+              />
+            </div>
+            <Button
+              onClick={handleManualFeed}
+              disabled={feedState === 'loading' || feedState === 'success'}
+              variant={feedBtnVariant}
+              className="gap-1.5 h-10 min-w-[120px]"
             >
-              Sugestão: {suggestedAmount}g (metade da meta)
-            </button>
+              {feedBtnContent()}
+            </Button>
           </div>
-          <Button
-            onClick={handleManualFeed}
-            disabled={feedState === 'loading' || feedState === 'success'}
-            variant={feedBtnVariant}
-            className="gap-1.5 min-w-[120px]"
+          {amountError && <p className="text-xs text-[hsl(var(--destructive))]">{amountError}</p>}
+          <button
+            type="button"
+            onClick={() => handleAmountChange(suggestedAmount)}
+            className="text-xs text-primary hover:underline"
           >
-            {feedBtnContent()}
-          </Button>
+            Sugestão: {suggestedAmount}g (metade da meta)
+          </button>
         </div>
       </div>
 
