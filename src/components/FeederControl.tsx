@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pet, FeedingSchedule } from '@/lib/types';
-import { api, mockSchedules, getTodayConsumed } from '@/lib/mock-data';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Play, Plus, Clock, Pencil, Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -8,16 +8,18 @@ import { toast } from 'sonner';
 
 interface FeederControlProps {
   pets: Pet[];
+  onChanged?: () => void;
 }
 
 const dayNames = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 type FeedState = 'idle' | 'loading' | 'success' | 'error';
 
-export function FeederControl({ pets }: FeederControlProps) {
+export function FeederControl({ pets, onChanged }: FeederControlProps) {
   const [selectedPet, setSelectedPet] = useState(pets[0]?.id ?? '');
   const [manualAmount, setManualAmount] = useState(100);
-  const [schedules, setSchedules] = useState<FeedingSchedule[]>([...mockSchedules]);
+  const [schedules, setSchedules] = useState<FeedingSchedule[]>([]);
+  const [todayConsumed, setTodayConsumed] = useState(0);
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTime, setNewTime] = useState('12:00');
@@ -28,7 +30,6 @@ export function FeederControl({ pets }: FeederControlProps) {
 
   const pet = pets.find(p => p.id === selectedPet);
   const petSchedules = schedules.filter(s => s.petId === selectedPet);
-  const todayConsumed = getTodayConsumed(selectedPet);
   const dailyGoal = pet?.dailyRecommendedGrams ?? 0;
   const remaining = Math.max(0, dailyGoal - todayConsumed);
   const consumedPct = dailyGoal > 0 ? Math.min(100, Math.round((todayConsumed / dailyGoal) * 100)) : 0;
@@ -36,6 +37,29 @@ export function FeederControl({ pets }: FeederControlProps) {
   const suggestedAmount = pet
     ? Math.round(pet.dailyRecommendedGrams / 2)
     : 100;
+
+  useEffect(() => {
+    if (!selectedPet && pets[0]?.id) setSelectedPet(pets[0].id);
+  }, [pets, selectedPet]);
+
+  useEffect(() => {
+    if (!selectedPet) return;
+
+    const loadPetControl = async () => {
+      try {
+        const [schedulesData, consumptionData] = await Promise.all([
+          api.getSchedules(selectedPet),
+          api.getDailyConsumption(selectedPet, 1),
+        ]);
+        setSchedules(schedulesData);
+        setTodayConsumed(consumptionData[0]?.served ?? 0);
+      } catch (error: any) {
+        toast.error(error.message || 'Nao foi possivel carregar os agendamentos');
+      }
+    };
+
+    loadPetControl();
+  }, [selectedPet]);
 
   const validateAmount = (val: number): string => {
     if (val < 10) return 'Mínimo 10g';
@@ -56,8 +80,10 @@ export function FeederControl({ pets }: FeederControlProps) {
     setFeedState('loading');
     try {
       await api.triggerManualFeed(selectedPet, manualAmount);
+      setTodayConsumed(prev => prev + manualAmount);
       setFeedState('success');
       toast.success(`${manualAmount}g liberados para ${pet?.name}!`);
+      onChanged?.();
       setTimeout(() => setFeedState('idle'), 2500);
     } catch (e: any) {
       setFeedState('error');
@@ -67,8 +93,10 @@ export function FeederControl({ pets }: FeederControlProps) {
   };
 
   const handleToggle = async (id: string) => {
-    await api.toggleSchedule(id);
-    setSchedules(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+    const schedule = schedules.find(s => s.id === id);
+    if (!schedule) return;
+    const updated = await api.toggleSchedule(schedule);
+    setSchedules(prev => prev.map(s => s.id === id ? updated : s));
   };
 
   const handleAddSchedule = async () => {

@@ -7,22 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { ArrowLeft, Edit2, Trash2, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
-
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  age: number;
-  weight?: number;
-  diet?: string;
-  createdAt: string;
-}
+import { Pet } from '@/lib/types';
+import { api } from '@/lib/api';
 
 interface PetProfileProps {
   pet: Pet;
   onBack: () => void;
-  onUpdate?: (pet: Pet) => void;
-  onDelete?: (id: string) => void;
+  onUpdate?: () => void;
+  onDelete?: () => void;
 }
 
 export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps) => {
@@ -37,10 +29,10 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await api.updatePet(pet.id, editData);
 
     if (onUpdate) {
-      onUpdate(editData);
+      onUpdate();
     }
     toast.success('Pet atualizado com sucesso!');
     setIsEditing(false);
@@ -51,10 +43,10 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
     if (!window.confirm(`Tem certeza que deseja deletar ${pet.name}?`)) return;
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await api.deletePet(pet.id);
 
     if (onDelete) {
-      onDelete(pet.id);
+      onDelete();
     }
     toast.success(`${pet.name} removido!`);
     setIsLoading(false);
@@ -165,7 +157,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                     </div>
                     <div className="p-3 rounded-lg bg-secondary/50">
                       <p className="text-xs text-muted-foreground mb-1">Cadastrado em</p>
-                      <p className="text-sm font-semibold">{new Date(pet.createdAt).toLocaleDateString('pt-BR')}</p>
+                      <p className="text-sm font-semibold">{pet.createdAt ? new Date(pet.createdAt).toLocaleDateString('pt-BR') : '-'}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -214,7 +206,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
               <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs">Tipo de Ração</Label>
                 <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-foreground font-medium">{editData.diet || 'Não configurado'}</p>
+                  <p className="text-foreground font-medium">Nao configurado</p>
                 </div>
               </div>
 

@@ -15,6 +15,7 @@ export interface Pet {
   feedingGoal: FeedingGoal;
   avatarEmoji: string;
   dailyRecommendedGrams: number;
+  createdAt?: string;
 }
 
 export interface FeederStatus {
@@ -33,6 +34,7 @@ export interface FeederStatus {
 export interface FeedingRecord {
   id: string;
   petId: string;
+  petName?: string;
   timestamp: Date;
   amountGrams: number;
   type: 'manual' | 'scheduled';

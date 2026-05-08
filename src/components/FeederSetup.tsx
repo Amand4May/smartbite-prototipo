@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Wifi, WifiOff, RotateCw, Zap } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface FeederSetupProps {
   onBack: () => void;
@@ -30,11 +31,15 @@ export const FeederSetup = ({ onBack }: FeederSetupProps) => {
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    toast.success('Alimentador conectado com sucesso!');
-    setStep('success');
-    setIsLoading(false);
+    try {
+      await api.setupFeeder(`SMARTBITE-${networkName.replace(/\W/g, '').toUpperCase() || 'WIFI'}`, 'Comedouro SmartBite');
+      toast.success('Alimentador conectado com sucesso!');
+      setStep('success');
+    } catch (error: any) {
+      toast.error(error.message || 'Nao foi possivel conectar o alimentador');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

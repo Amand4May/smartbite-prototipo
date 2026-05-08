@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ChevronRight, Plus } from 'lucide-react';
+import { api } from '@/lib/api';
+import { Species } from '@/lib/types';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -15,7 +17,7 @@ type OnboardingStep = 'welcome' | 'pet' | 'feeder';
 
 export const Onboarding = ({ onComplete }: OnboardingProps) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
-  const [petData, setPetData] = useState({ name: '', species: 'dog', age: '' });
+  const [petData, setPetData] = useState<{ name: string; species: Species; age: string }>({ name: '', species: 'dog', age: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAddPet = async () => {
@@ -25,11 +27,23 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    toast.success(`${petData.name} adicionado com sucesso!`);
-    setStep('feeder');
-    setIsLoading(false);
+    try {
+      await api.addPet({
+        name: petData.name,
+        species: petData.species,
+        breed: '',
+        weight: 1,
+        age: Number(petData.age),
+        activityLevel: 'moderate',
+        feedingGoal: 'maintenance',
+      });
+      toast.success(`${petData.name} adicionado com sucesso!`);
+      setStep('feeder');
+    } catch (error: any) {
+      toast.error(error.message || 'Nao foi possivel adicionar o pet');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSkipFeeder = async () => {
@@ -134,16 +148,13 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
 
             <div className="space-y-2">
               <Label htmlFor="pet-species">Tipo</Label>
-              <Select value={petData.species} onValueChange={(value) => setPetData({ ...petData, species: value })}>
+              <Select value={petData.species} onValueChange={(value: Species) => setPetData({ ...petData, species: value })}>
                 <SelectTrigger id="pet-species" disabled={isLoading}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dog">Cachorro</SelectItem>
                   <SelectItem value="cat">Gato</SelectItem>
-                  <SelectItem value="rabbit">Coelho</SelectItem>
-                  <SelectItem value="bird">Pássaro</SelectItem>
-                  <SelectItem value="other">Outro</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, AlertSeverity } from '@/lib/types';
-import { api } from '@/lib/mock-data';
+import { api } from '@/lib/api';
 import { AlertTriangle, Utensils, WifiOff, Info, X, Check, Cog } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface AlertsPanelProps {
   alerts: Alert[];
+  onChanged?: () => void;
 }
 
 const alertIcons: Record<string, React.ElementType> = {
@@ -41,20 +42,26 @@ const severityLabels: Record<AlertSeverity, string> = {
   info: 'Informativo',
 };
 
-export function AlertsPanel({ alerts: initialAlerts }: AlertsPanelProps) {
+export function AlertsPanel({ alerts: initialAlerts, onChanged }: AlertsPanelProps) {
   const [alerts, setAlerts] = useState(initialAlerts);
   const visibleAlerts = alerts.filter(a => !a.dismissed);
+
+  useEffect(() => {
+    setAlerts(initialAlerts);
+  }, [initialAlerts]);
 
   if (visibleAlerts.length === 0) return null;
 
   const handleDismiss = async (id: string) => {
     await api.dismissAlert(id);
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, dismissed: true } : a));
+    onChanged?.();
   };
 
   const handleMarkRead = async (id: string) => {
     await api.markAlertRead(id);
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
+    onChanged?.();
   };
 
   return (

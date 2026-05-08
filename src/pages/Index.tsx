@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { mockPets, mockFeederStatus, mockFeedingHistory, mockAlerts, mockDailyConsumption, api } from '@/lib/mock-data';
+import { api, clearAuthToken } from '@/lib/api';
+import { Alert, DailyConsumption, FeederStatus, FeedingRecord, Pet } from '@/lib/types';
 import { PetCard } from '@/components/PetCard';
 import { FeederStatusCard } from '@/components/FeederStatusCard';
 import { AlertsPanel } from '@/components/AlertsPanel';
@@ -28,16 +29,6 @@ interface User {
   email: string;
 }
 
-interface Pet {
-  id: string;
-  name: string;
-  species: string;
-  age: number;
-  weight?: number;
-  diet?: string;
-  createdAt: string;
-}
-
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -45,6 +36,12 @@ const Index = () => {
   const [showPetForm, setShowPetForm] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
+  const [pets, setPets] = useState<Pet[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [feederStatus, setFeederStatus] = useState<FeederStatus | null>(null);
+  const [feedingHistory, setFeedingHistory] = useState<FeedingRecord[]>([]);
+  const [dailyConsumption, setDailyConsumption] = useState<DailyConsumption[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const forceRefresh = useCallback(() => setRefreshKey(n => n + 1), []);
 
@@ -67,18 +64,68 @@ const Index = () => {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    toast.success('Logout realizado com sucesso!');
+  useEffect(() => {
+    if (!user) return;
+
+    const loadDashboard = async () => {
+      setIsLoadingData(true);
+      try {
+        const [petsData, alertsData, feederData] = await Promise.all([
+          api.getPets(),
+          api.getAlerts(),
+          api.getFeederStatus(),
+        ]);
+        setPets(petsData);
+        setAlerts(alertsData);
+        setFeederStatus(feederData);
+
+        const firstPetId = petsData[0]?.id;
+        if (firstPetId) {
+          const [historyData, consumptionData] = await Promise.all([
+            api.getFeedingHistory(firstPetId),
+            api.getDailyConsumption(firstPetId),
+          ]);
+          setFeedingHistory(historyData);
+          setDailyConsumption(consumptionData);
+        } else {
+          setFeedingHistory([]);
+          setDailyConsumption([]);
+        }
+      } catch (error: any) {
+        toast.error(error.message || 'Nao foi possivel carregar dados da API');
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadDashboard();
+  }, [user, refreshKey]);
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      clearAuthToken();
+    } finally {
+      localStorage.removeItem('user');
+      setUser(null);
+      toast.success('Logout realizado com sucesso!');
+    }
   };
 
   const handleUserUpdate = (updatedUser: User) => {
     setUser(updatedUser);
   };
 
+  const handleAuthSuccess = (authenticatedUser: User, options?: { isNewAccount?: boolean }) => {
+    setUser(authenticatedUser);
+    if (options?.isNewAccount) {
+      setShowOnboarding(true);
+    }
+  };
+
   const handleDeletePet = async (id: string) => {
-    const pet = mockPets.find(p => p.id === id);
+    const pet = pets.find(p => p.id === id);
     if (!pet) return;
     await api.deletePet(id);
     toast.success(`${pet.name} removido(a)`);
@@ -87,12 +134,15 @@ const Index = () => {
 
   // Se não há usuário autenticado, mostrar tela de Auth
   if (!user) {
-    return <Auth onAuthSuccess={setUser} />;
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
   }
 
   // Se não completou onboarding, mostrar guia
   if (showOnboarding) {
-    return <Onboarding onComplete={() => setShowOnboarding(false)} />;
+    return <Onboarding onComplete={() => {
+      setShowOnboarding(false);
+      forceRefresh();
+    }} />;
   }
 
   // Header compartilhado
@@ -252,22 +302,22 @@ const Index = () => {
         ) : tab === 'dashboard' ? (
           <>
             <ScrollReveal>
-              <AlertsPanel alerts={mockAlerts} />
+              <AlertsPanel alerts={alerts} onChanged={forceRefresh} />
             </ScrollReveal>
 
             <ScrollReveal delay={0.08}>
-              <FeederStatusCard status={mockFeederStatus} />
+              {feederStatus && <FeederStatusCard status={feederStatus} />}
             </ScrollReveal>
 
             <ScrollReveal delay={0.15}>
               <div className="space-y-2">
                 <h3 className="font-semibold text-foreground">Meus Pets</h3>
                 <div className="grid gap-2">
-                  {mockPets.map(pet => (
+                  {pets.map(pet => (
                     <button
                       key={pet.id}
                       onClick={() => {
-                        setSelectedPet(pet as Pet);
+                        setSelectedPet(pet);
                         setTab('pet-profile');
                       }}
                       className="text-left hover:opacity-90 transition-opacity"
@@ -275,7 +325,7 @@ const Index = () => {
                       <PetCard pet={pet} onDelete={handleDeletePet} />
                     </button>
                   ))}
-                  {mockPets.length === 0 && (
+                  {!isLoadingData && pets.length === 0 && (
                     <p className="text-sm text-muted-foreground py-6 text-center">
                       Nenhum pet cadastrado. Adicione um para começar!
                     </p>
@@ -285,11 +335,11 @@ const Index = () => {
             </ScrollReveal>
 
             <ScrollReveal delay={0.2}>
-              <ConsumptionChart data={mockDailyConsumption} />
+              <ConsumptionChart data={dailyConsumption} />
             </ScrollReveal>
 
             <ScrollReveal delay={0.25}>
-              <FeedingHistory records={mockFeedingHistory} />
+              <FeedingHistory records={feedingHistory} pets={pets} />
             </ScrollReveal>
           </>
         ) : tab === 'control' ? (
@@ -312,12 +362,12 @@ const Index = () => {
               </Button>
             </div>
             <ScrollReveal>
-              <FeederControl pets={mockPets} />
+              <FeederControl pets={pets} onChanged={forceRefresh} />
             </ScrollReveal>
           </>
         ) : (
           <ScrollReveal>
-            <FeederControl pets={mockPets} />
+            <FeederControl pets={pets} onChanged={forceRefresh} />
           </ScrollReveal>
         )}
       </main>

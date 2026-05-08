@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { api } from '@/lib/api';
 
 interface AuthProps {
-  onAuthSuccess: (user: { id: string; name: string; email: string }) => void;
+  onAuthSuccess: (user: { id: string; name: string; email: string }, options?: { isNewAccount?: boolean }) => void;
 }
 
 export const Auth = ({ onAuthSuccess }: AuthProps) => {
@@ -37,11 +38,7 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Simular login bem-sucedido
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: loginData.email.split('@')[0],
-      email: loginData.email,
-    };
+    const user = await api.login(loginData.email, loginData.password);
 
     localStorage.setItem('user', JSON.stringify(user));
     toast.success('Login realizado com sucesso!');
@@ -72,15 +69,17 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Simular cadastro bem-sucedido
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      name: signupData.name,
-      email: signupData.email,
-    };
+    const user = await api.register(
+      signupData.name,
+      signupData.email,
+      signupData.password,
+      signupData.confirmPassword,
+    );
 
     localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('onboarding', JSON.stringify({ completed: false, userId: user.id }));
     toast.success('Cadastro realizado com sucesso!');
-    onAuthSuccess(user);
+    onAuthSuccess(user, { isNewAccount: true });
     setIsLoading(false);
   };
 
