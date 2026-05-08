@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Species, ActivityLevel, FeedingGoal } from '@/lib/types';
+import { Species, ActivityLevel, FeedingGoal, BodyCondition } from '@/lib/types';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -15,9 +15,16 @@ export function PetForm({ onClose, onAdded }: PetFormProps) {
   const [species, setSpecies] = useState<Species>('dog');
   const [breed, setBreed] = useState('');
   const [weight, setWeight] = useState(10);
-  const [age, setAge] = useState(2);
+  const [ageYears, setAgeYears] = useState(2);
+  const [ageMonths, setAgeMonths] = useState(0);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel>('moderate');
   const [feedingGoal, setFeedingGoal] = useState<FeedingGoal>('maintenance');
+  const [isNeutered, setIsNeutered] = useState(false);
+  const [bodyCondition, setBodyCondition] = useState<BodyCondition>('ideal');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Calcula total em meses
+  const totalAgeMonths = ageYears * 12 + ageMonths;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,10 +32,28 @@ export function PetForm({ onClose, onAdded }: PetFormProps) {
       toast.error('Preencha todos os campos.');
       return;
     }
-    await api.addPet({ name, species, breed, weight, age, activityLevel, feedingGoal });
-    toast.success(`${name} cadastrado(a) com sucesso!`);
-    onAdded();
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await api.addPet({
+        name,
+        species,
+        breed,
+        weight,
+        age: totalAgeMonths,
+        activityLevel,
+        feedingGoal,
+        // prefer camelCase; api.fromPet accepts both snake_case and camelCase
+        isNeutered,
+        bodyCondition,
+      } as any);
+      toast.success(`${name} cadastrado(a) com sucesso!`);
+      onAdded();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao cadastrar pet.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -83,8 +108,16 @@ export function PetForm({ onClose, onAdded }: PetFormProps) {
             </div>
             <div>
               <label className={labelClass}>Idade (anos)</label>
-              <input type="number" min={0} value={age} onChange={(e) => setAge(Number(e.target.value))} className={inputClass} />
+              <input type="number" min={0} value={ageYears} onChange={(e) => setAgeYears(Number(e.target.value))} className={inputClass} />
             </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Meses (adicional)</label>
+            <input type="number" min={0} max={11} value={ageMonths} onChange={(e) => setAgeMonths(Math.min(11, Number(e.target.value)))} className={inputClass} placeholder="0-11" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Total: {totalAgeMonths} meses ({ageYears}a {ageMonths}m)
+            </p>
           </div>
 
           <div>
@@ -135,8 +168,46 @@ export function PetForm({ onClose, onAdded }: PetFormProps) {
             </div>
           </div>
 
-          <Button type="submit" className="w-full mt-2">
-            Cadastrar Pet
+          <div className="pt-3 border-t">
+            <label className={labelClass}>Castração/Esterilização</label>
+            <div className="flex gap-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={!isNeutered}
+                  onChange={() => setIsNeutered(false)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Não castrado</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={isNeutered}
+                  onChange={() => setIsNeutered(true)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Castrado</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>Condição Corporal</label>
+            <select
+              value={bodyCondition}
+              onChange={(e) => setBodyCondition(e.target.value as BodyCondition)}
+              className={inputClass}
+            >
+              <option value="underweight">Abaixo do peso</option>
+              <option value="ideal">Peso ideal</option>
+              <option value="overweight">Sobrepeso</option>
+              <option value="obese">Obeso</option>
+            </select>
+          </div>
+
+          <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+            {isSubmitting ? 'Enviando...' : 'Cadastrar Pet'}
           </Button>
         </form>
       </div>

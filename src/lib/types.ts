@@ -1,6 +1,7 @@
 export type Species = 'dog' | 'cat';
 export type ActivityLevel = 'low' | 'moderate' | 'high';
 export type FeedingGoal = 'weight_loss' | 'maintenance' | 'weight_gain';
+export type BodyCondition = 'underweight' | 'ideal' | 'overweight' | 'obese';
 export type DeviceState = 'online' | 'processing' | 'offline';
 export type AlertSeverity = 'critical' | 'warning' | 'info';
 
@@ -13,6 +14,9 @@ export interface Pet {
   age: number;
   activityLevel: ActivityLevel;
   feedingGoal: FeedingGoal;
+  isNeutered?: boolean;
+  bodyCondition?: BodyCondition;
+  breedFactor?: number;
   avatarEmoji: string;
   dailyRecommendedGrams: number;
   createdAt?: string;

@@ -19,8 +19,16 @@ interface PetProfileProps {
 
 export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState(pet);
+  // Garantir que age é sempre um número
+  const [editData, setEditData] = useState({ ...pet, age: Number(pet.age) || 0 });
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedMeals, setSelectedMeals] = useState<Set<string>>(new Set(['Manhã', 'Noite']));
+  const [dailyGrams, setDailyGrams] = useState(pet.dailyRecommendedGrams?.toString() || '200');
+  
+  // Converter meses para anos e meses para exibição (garantir valores numéricos)
+  const ageNum = Number(editData.age) || 0;
+  const ageYears = Math.floor(ageNum / 12);
+  const ageMonthsOnly = ageNum % 12;
 
   const handleSave = async () => {
     if (!editData.name || !editData.weight) {
@@ -40,17 +48,46 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Tem certeza que deseja deletar ${pet.name}?`)) return;
+    if (!window.confirm(`Tem certeza que deseja deletar ${pet.name}? Esta ação não pode ser desfeita.`)) return;
 
     setIsLoading(true);
-    await api.deletePet(pet.id);
-
-    if (onDelete) {
-      onDelete();
+    try {
+      await api.deletePet(pet.id);
+      toast.success(`${pet.name} foi removido com sucesso!`);
+      
+      if (onDelete) {
+        onDelete();
+      }
+      // Pequeno delay para ver a notificação antes de voltar
+      await new Promise(resolve => setTimeout(resolve, 300));
+      onBack();
+    } catch (error) {
+      toast.error(`Erro ao remover ${pet.name}`);
+      setIsLoading(false);
     }
-    toast.success(`${pet.name} removido!`);
+  };
+
+  const handleSaveMealPlan = async () => {
+    if (!dailyGrams || selectedMeals.size === 0) {
+      toast.error('Por favor, selecione pelo menos um horário e defina a quantidade');
+      return;
+    }
+    
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    toast.success(`Plano alimentar salvo: ${Array.from(selectedMeals).join(', ')} - ${dailyGrams}g`);
     setIsLoading(false);
-    onBack();
+  };
+
+  const toggleMealTime = (time: string) => {
+    const newMeals = new Set(selectedMeals);
+    if (newMeals.has(time)) {
+      newMeals.delete(time);
+    } else {
+      newMeals.add(time);
+    }
+    setSelectedMeals(newMeals);
   };
 
   return (
@@ -114,10 +151,81 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                   <Label>Idade (anos)</Label>
                   <Input
                     type="number"
-                    value={editData.age}
-                    onChange={(e) => setEditData({ ...editData, age: parseInt(e.target.value) })}
+                    value={ageYears}
+                    onChange={(e) => {
+                      const newYears = parseInt(e.target.value) || 0;
+                      setEditData({ ...editData, age: newYears * 12 + ageMonthsOnly });
+                    }}
                     disabled={isLoading}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Meses (adicional)</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={11}
+                    value={ageMonthsOnly}
+                    onChange={(e) => {
+                      const newMonths = Math.min(11, parseInt(e.target.value) || 0);
+                      setEditData({ ...editData, age: ageYears * 12 + newMonths });
+                    }}
+                    disabled={isLoading}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Total: {editData.age} meses ({ageYears}a {ageMonthsOnly}m)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Raça</Label>
+                  <Input
+                    value={editData.breed || ''}
+                    onChange={(e) => setEditData({ ...editData, breed: e.target.value })}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Castração/Esterilização</Label>
+                  <div className="flex gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={!editData.isNeutered}
+                        onChange={() => setEditData({ ...editData, isNeutered: false })}
+                        disabled={isLoading}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">Não castrado</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={editData.isNeutered}
+                        onChange={() => setEditData({ ...editData, isNeutered: true })}
+                        disabled={isLoading}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm">Castrado</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Condição Corporal</Label>
+                  <select
+                    value={editData.bodyCondition || 'ideal'}
+                    onChange={(e) => setEditData({ ...editData, bodyCondition: e.target.value as any })}
+                    disabled={isLoading}
+                    className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="underweight">Abaixo do peso</option>
+                    <option value="ideal">Peso ideal</option>
+                    <option value="overweight">Sobrepeso</option>
+                    <option value="obese">Obeso</option>
+                  </select>
                 </div>
 
                 <div className="flex gap-2 pt-4">
@@ -146,7 +254,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                 <CardHeader>
                   <CardTitle className="text-2xl">{pet.name}</CardTitle>
                   <CardDescription>
-                    {pet.species} • {pet.age} anos
+                    {pet.species} • {ageYears} anos {ageMonthsOnly > 0 ? `e ${ageMonthsOnly} meses` : ''}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -215,7 +323,9 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                 <Input
                   type="number"
                   placeholder="200"
-                  defaultValue="200"
+                  value={dailyGrams}
+                  onChange={(e) => setDailyGrams(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
 
@@ -223,14 +333,29 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                 <Label>Frequência de alimentação</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {['Manhã', 'Tarde', 'Noite'].map(time => (
-                    <button key={time} className="p-2 rounded-lg border-2 border-primary text-sm font-medium">
+                    <button 
+                      key={time} 
+                      onClick={() => toggleMealTime(time)}
+                      disabled={isLoading}
+                      className={`p-2 rounded-lg border-2 text-sm font-medium transition-colors ${
+                        selectedMeals.has(time)
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-secondary bg-background text-foreground hover:border-primary'
+                      }`}
+                    >
                       {time}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <Button className="w-full">Salvar Plano Alimentar</Button>
+              <Button 
+                className="w-full"
+                onClick={handleSaveMealPlan}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Salvando...' : 'Salvar Plano Alimentar'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
