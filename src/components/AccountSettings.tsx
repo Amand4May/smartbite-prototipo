@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { Mail, Lock, Trash2, Edit2, Eye, EyeOff, AlertTriangle, ArrowLeft, Moon, Globe, Weight, Bell } from 'lucide-react';
+import { api } from '@/lib/api';
+import { setLanguage, t } from '@/lib/translations';
 
 interface User {
   id: string;
@@ -52,6 +54,22 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
 
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    const savedPreferences = localStorage.getItem('userPreferences');
+    if (savedPreferences) {
+      try {
+        const preferences = JSON.parse(savedPreferences);
+        if (preferences.theme) setTheme(preferences.theme);
+        if (preferences.language) setLanguage(preferences.language);
+        if (preferences.weightUnit) setWeightUnit(preferences.weightUnit);
+        if (preferences.offlineAlerts !== undefined) setOfflineAlerts(preferences.offlineAlerts);
+      } catch (error) {
+        console.error('Erro ao carregar preferências:', error);
+      }
+    }
+  }, []);
+
   const handleEmailUpdate = async () => {
     if (!newEmail || newEmail === user?.email) {
       toast.error('Email não pode ser vazio ou igual ao atual');
@@ -96,12 +114,20 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
     }
 
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    toast.success('Senha alterada com sucesso!');
-    setEditingPassword(false);
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setIsLoading(false);
+    try {
+      await api.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+        passwordData.confirmPassword
+      );
+      toast.success('Senha alterada com sucesso!');
+      setEditingPassword(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao alterar senha');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -121,6 +147,16 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
     const preferences = { theme, language, weightUnit, offlineAlerts };
     localStorage.setItem('userPreferences', JSON.stringify(preferences));
     
+    // Apply theme
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    // Apply language
+    setLanguage(language as any);
+    
     toast.success('Preferências salvas com sucesso!');
     setIsLoading(false);
   };
@@ -135,13 +171,13 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
         className="flex items-center gap-2"
       >
         <ArrowLeft className="h-4 w-4" />
-        Voltar
+        {t('back')}
       </Button>
 
       {/* Profile Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Minha Conta</CardTitle>
+          <CardTitle>{t('my_account')}</CardTitle>
           <CardDescription>Gerencie suas informações pessoais</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -155,7 +191,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
 
           {/* Email Section */}
           <div className="space-y-2">
-            <Label className="text-muted-foreground text-xs">Email</Label>
+            <Label className="text-muted-foreground text-xs">{t('email')}</Label>
             {editingEmail ? (
               <div className="space-y-2">
                 <Input
@@ -171,7 +207,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                     onClick={handleEmailUpdate}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Salvando...' : 'Salvar'}
+                    {isLoading ? 'Salvando...' : t('save')}
                   </Button>
                   <Button
                     size="sm"
@@ -182,7 +218,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                     }}
                     disabled={isLoading}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>
@@ -202,12 +238,12 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
 
           {/* Password Section */}
           <div className="space-y-2 pt-2 border-t">
-            <Label className="text-muted-foreground text-xs">Senha</Label>
+            <Label className="text-muted-foreground text-xs">{t('password')}</Label>
             {editingPassword ? (
               <div className="space-y-3">
                 {/* Current Password */}
                 <div className="relative">
-                  <Label htmlFor="current-password" className="text-xs">Senha Atual</Label>
+                  <Label htmlFor="current-password" className="text-xs">{t('current_password')}</Label>
                   <div className="relative mt-1">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -232,7 +268,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
 
                 {/* New Password */}
                 <div className="relative">
-                  <Label htmlFor="new-password" className="text-xs">Nova Senha</Label>
+                  <Label htmlFor="new-password" className="text-xs">{t('new_password')}</Label>
                   <div className="relative mt-1">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -257,7 +293,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
 
                 {/* Confirm Password */}
                 <div className="relative">
-                  <Label htmlFor="confirm-password" className="text-xs">Confirmar Nova Senha</Label>
+                  <Label htmlFor="confirm-password" className="text-xs">{t('confirm_password')}</Label>
                   <div className="relative mt-1">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -286,7 +322,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                     onClick={handlePasswordUpdate}
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Salvando...' : 'Salvar Senha'}
+                    {isLoading ? 'Salvando...' : t('change_password')}
                   </Button>
                   <Button
                     size="sm"
@@ -297,7 +333,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                     }}
                     disabled={isLoading}
                   >
-                    Cancelar
+                    {t('cancel')}
                   </Button>
                 </div>
               </div>
@@ -309,7 +345,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                 className="w-full justify-start"
               >
                 <Lock className="h-4 w-4 mr-2" />
-                Alterar Senha
+                {t('change_password')}
               </Button>
             )}
           </div>
@@ -319,7 +355,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
       {/* Preferences Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Preferências</CardTitle>
+          <CardTitle>{t('preferences')}</CardTitle>
           <CardDescription>Personalize sua experiência no SmartBite</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -327,7 +363,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-base">
               <Moon className="h-4 w-4" />
-              Tema
+              {t('theme')}
             </Label>
             <div className="flex gap-2">
               <Button
@@ -336,7 +372,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                 onClick={() => setTheme('light')}
                 disabled={isLoading}
               >
-                Claro
+                {t('light')}
               </Button>
               <Button
                 size="sm"
@@ -344,7 +380,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                 onClick={() => setTheme('dark')}
                 disabled={isLoading}
               >
-                Escuro
+                {t('dark')}
               </Button>
             </div>
           </div>
@@ -353,7 +389,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
           <div className="space-y-2 pt-2 border-t">
             <Label className="flex items-center gap-2 text-base">
               <Globe className="h-4 w-4" />
-              Idioma
+              {t('language')}
             </Label>
             <select
               value={language}
@@ -361,9 +397,8 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
               disabled={isLoading}
               className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
             >
-              <option value="pt-BR">Português (Brasil)</option>
-              <option value="en-US">English (US)</option>
-              <option value="es-ES">Español (España)</option>
+              <option value="pt-BR">{t('portuguese_br')}</option>
+              <option value="en-US">{t('english_us')}</option>
             </select>
           </div>
 
@@ -371,7 +406,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
           <div className="space-y-2 pt-2 border-t">
             <Label className="flex items-center gap-2 text-base">
               <Weight className="h-4 w-4" />
-              Unidade de Peso
+              {t('weight_unit')}
             </Label>
             <div className="flex gap-2">
               <Button
@@ -380,7 +415,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                 onClick={() => setWeightUnit('kg')}
                 disabled={isLoading}
               >
-                Quilogramas (kg)
+                {t('kilograms')}
               </Button>
               <Button
                 size="sm"
@@ -388,7 +423,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
                 onClick={() => setWeightUnit('lb')}
                 disabled={isLoading}
               >
-                Libras (lb)
+                {t('pounds')}
               </Button>
             </div>
           </div>
@@ -419,7 +454,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
             onClick={handleSavePreferences}
             disabled={isLoading}
           >
-            {isLoading ? 'Salvando...' : 'Salvar Preferências'}
+            {isLoading ? 'Salvando...' : t('save_preferences')}
           </Button>
         </CardContent>
       </Card>
@@ -427,8 +462,8 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
       {/* Help & Legal */}
       <Card>
         <CardHeader>
-          <CardTitle>Ajuda & Legal</CardTitle>
-          <CardDescription>Informações importantes sobre o SmartBite</CardDescription>
+          <CardTitle>{t('help_legal')}</CardTitle>
+          <CardDescription>{t('important_information')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <Button
@@ -436,20 +471,14 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
             className="w-full justify-start"
             onClick={() => setShowPrivacy(true)}
           >
-            Política de Privacidade
+            {t('privacy_policy')}
           </Button>
           <Button
             variant="outline"
             className="w-full justify-start"
             onClick={() => setShowTerms(true)}
           >
-            Termos de Serviço
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-          >
-            Tutorial: Como Adicionar Raça do Pet
+            {t('terms_of_service')}
           </Button>
         </CardContent>
       </Card>
@@ -457,9 +486,9 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
         <CardHeader>
           <CardTitle className="text-destructive text-base flex items-center gap-2">
             <AlertTriangle className="h-4 w-4" />
-            Zona de Perigo
+            {t('danger_zone')}
           </CardTitle>
-          <CardDescription>Ações que não podem ser desfeitas</CardDescription>
+          <CardDescription>{t('irreversible_actions')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button
@@ -468,7 +497,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
             onClick={() => setShowDeleteConfirm(true)}
           >
             <Trash2 className="h-4 w-4 mr-2" />
-            Deletar Conta
+            {t('delete_account')}
           </Button>
         </CardContent>
       </Card>
@@ -479,7 +508,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              Deletar Conta
+              {t('delete_account')}
             </DialogTitle>
             <DialogDescription>
               Tem certeza que deseja deletar sua conta? Esta ação não pode ser desfeita e você perderá todos os seus dados.
@@ -497,14 +526,14 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
               onClick={() => setShowDeleteConfirm(false)}
               disabled={isLoading}
             >
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeleteAccount}
               disabled={isLoading}
             >
-              {isLoading ? 'Deletando...' : 'Deletar Conta'}
+              {isLoading ? 'Deletando...' : t('delete_account')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -514,7 +543,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
       <Dialog open={showPrivacy} onOpenChange={setShowPrivacy}>
         <DialogContent className="max-h-96 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Política de Privacidade</DialogTitle>
+            <DialogTitle>{t('privacy_policy')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <div>
@@ -548,7 +577,7 @@ export const AccountSettings = ({ user, onLogout, onUserUpdate, onGoBack }: Acco
       <Dialog open={showTerms} onOpenChange={setShowTerms}>
         <DialogContent className="max-h-96 overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Termos de Serviço</DialogTitle>
+            <DialogTitle>{t('terms_of_service')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit2, Trash2, TrendingUp, Activity, AlertTriangle } from 'lucide-react';
-import { Pet } from '@/lib/types';
+import { ArrowLeft, Edit2, Trash2, TrendingUp, Activity, AlertTriangle, X } from 'lucide-react';
+import { Pet, FeedingSchedule } from '@/lib/types';
 import { api } from '@/lib/api';
+import { t } from '@/lib/translations';
 
 interface PetProfileProps {
   pet: Pet;
@@ -22,13 +23,64 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
   // Garantir que age é sempre um número
   const [editData, setEditData] = useState({ ...pet, age: Number(pet.age) || 0 });
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedMeals, setSelectedMeals] = useState<Set<string>>(new Set(['Manhã', 'Noite']));
+  const [selectedMeals, setSelectedMeals] = useState<Set<string>>(new Set());
   const [dailyGrams, setDailyGrams] = useState(pet.dailyRecommendedGrams?.toString() || '200');
+  const [schedules, setSchedules] = useState<FeedingSchedule[]>([]);
+  const [isSavingSchedules, setIsSavingSchedules] = useState(false);
+
+  // Mapear nomes dos horários para horas (usando traduções)
+  const mealTimeHours: { [key: string]: string } = {
+    [t('morning')]: '08:00',
+    [t('afternoon')]: '13:00',
+    [t('evening')]: '19:00',
+  };
+
+  // Mapear horas para nomes dos horários (para exibição, usando traduções)
+  const hourToMealTime: { [key: string]: string } = {
+    '08:00': t('morning'),
+    '13:00': t('afternoon'),
+    '19:00': t('evening'),
+  };
   
   // Converter meses para anos e meses para exibição (garantir valores numéricos)
   const ageNum = Number(editData.age) || 0;
   const ageYears = Math.floor(ageNum / 12);
   const ageMonthsOnly = ageNum % 12;
+
+  // Carregar agendamentos existentes ao montar o componente
+  useEffect(() => {
+    const loadSchedules = async () => {
+      try {
+        const loadedSchedules = await api.getSchedules(pet.id);
+        setSchedules(loadedSchedules);
+        
+        // Atualizar selectedMeals baseado nos agendamentos existentes
+        const mealsFromSchedules = new Set<string>();
+        loadedSchedules.forEach(schedule => {
+          const mealName = hourToMealTime[schedule.time];
+          if (mealName && schedule.enabled) {
+            mealsFromSchedules.add(mealName);
+          }
+        });
+        
+        if (mealsFromSchedules.size > 0) {
+          setSelectedMeals(mealsFromSchedules);
+        } else {
+          // Se não há agendamentos, inicializar com manhã e noite
+          setSelectedMeals(new Set([t('morning'), t('evening')]));
+        }
+        
+        // Atualizar quantidade diária
+        if (loadedSchedules.length > 0) {
+          setDailyGrams(loadedSchedules[0].amountGrams.toString());
+        }
+      } catch (error) {
+        console.error('Erro ao carregar agendamentos:', error);
+      }
+    };
+    
+    loadSchedules();
+  }, [pet.id]);
 
   const handleSave = async () => {
     if (!editData.name || !editData.weight) {
@@ -73,11 +125,48 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
       return;
     }
     
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    toast.success(`Plano alimentar salvo: ${Array.from(selectedMeals).join(', ')} - ${dailyGrams}g`);
-    setIsLoading(false);
+    setIsSavingSchedules(true);
+    try {
+      const gramsPerMeal = Math.floor(Number(dailyGrams) / selectedMeals.size);
+      const newSchedules: FeedingSchedule[] = [];
+
+      // Deletar agendamentos antigos
+      for (const schedule of schedules) {
+        await api.deleteSchedule(schedule.id);
+      }
+
+      // Criar novos agendamentos para as refeições selecionadas
+      for (const mealName of selectedMeals) {
+        const time = mealTimeHours[mealName];
+        if (time) {
+          const newSchedule = await api.addSchedule({
+            petId: pet.id,
+            time,
+            amountGrams: gramsPerMeal,
+            enabled: true,
+            days: [0, 1, 2, 3, 4, 5, 6], // Todos os dias da semana
+          });
+          newSchedules.push(newSchedule);
+        }
+      }
+
+      setSchedules(newSchedules);
+      toast.success(`Plano alimentar salvo: ${Array.from(selectedMeals).join(', ')} - ${gramsPerMeal}g por refeição`);
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar plano alimentar');
+    } finally {
+      setIsSavingSchedules(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (scheduleId: string) => {
+    try {
+      await api.deleteSchedule(scheduleId);
+      setSchedules(schedules.filter(s => s.id !== scheduleId));
+      toast.success('Agendamento removido');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao remover agendamento');
+    }
   };
 
   const toggleMealTime = (time: string) => {
@@ -99,7 +188,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
-          Voltar
+          {t('back')}
         </button>
         {!isEditing && (
           <Button 
@@ -108,7 +197,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
             onClick={() => setIsEditing(true)}
           >
             <Edit2 className="h-4 w-4 mr-2" />
-            Editar
+            {t('edit')}
           </Button>
         )}
       </div>
@@ -194,7 +283,7 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                       <input
                         type="radio"
                         checked={!editData.isNeutered}
-                        onChange={() => setEditData({ ...editData, isNeutered: false })}
+                        onChange={() => setEditData({ ...editData, isNeutered: false, neuteredDate: undefined })}
                         disabled={isLoading}
                         className="w-4 h-4"
                       />
@@ -212,6 +301,18 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                     </label>
                   </div>
                 </div>
+
+                {editData.isNeutered && (
+                  <div className="space-y-2">
+                    <Label>Data de Castração</Label>
+                    <Input
+                      type="date"
+                      value={editData.neuteredDate ? editData.neuteredDate.split('T')[0] : ''}
+                      onChange={(e) => setEditData({ ...editData, neuteredDate: e.target.value ? `${e.target.value}T00:00:00Z` : undefined })}
+                      disabled={isLoading}
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Condição Corporal</Label>
@@ -264,8 +365,14 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
                       <p className="text-lg font-semibold">{pet.weight || '—'} kg</p>
                     </div>
                     <div className="p-3 rounded-lg bg-secondary/50">
-                      <p className="text-xs text-muted-foreground mb-1">Cadastrado em</p>
-                      <p className="text-sm font-semibold">{pet.createdAt ? new Date(pet.createdAt).toLocaleDateString('pt-BR') : '-'}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{pet.isNeutered ? t('castrated_at') : t('registered_at')}</p>
+                      <p className="text-sm font-semibold">
+                        {pet.isNeutered && pet.neuteredDate
+                          ? new Date(pet.neuteredDate).toLocaleDateString('pt-BR')
+                          : pet.createdAt
+                          ? new Date(pet.createdAt).toLocaleDateString('pt-BR')
+                          : '-'}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -312,31 +419,31 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Tipo de Ração</Label>
+                <Label className="text-muted-foreground text-xs">{t('food_type')}</Label>
                 <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-foreground font-medium">Nao configurado</p>
+                  <p className="text-foreground font-medium">{t('not_configured')}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Quantidade diária (gramas)</Label>
+                <Label>{t('daily_amount')}</Label>
                 <Input
                   type="number"
                   placeholder="200"
                   value={dailyGrams}
                   onChange={(e) => setDailyGrams(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isSavingSchedules}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Frequência de alimentação</Label>
+                <Label>{t('feeding_frequency')}</Label>
                 <div className="grid grid-cols-3 gap-2">
-                  {['Manhã', 'Tarde', 'Noite'].map(time => (
+                  {[t('morning'), t('afternoon'), t('evening')].map(time => (
                     <button 
                       key={time} 
                       onClick={() => toggleMealTime(time)}
-                      disabled={isLoading}
+                      disabled={isSavingSchedules}
                       className={`p-2 rounded-lg border-2 text-sm font-medium transition-colors ${
                         selectedMeals.has(time)
                           ? 'border-primary bg-primary text-primary-foreground'
@@ -352,10 +459,40 @@ export const PetProfile = ({ pet, onBack, onUpdate, onDelete }: PetProfileProps)
               <Button 
                 className="w-full"
                 onClick={handleSaveMealPlan}
-                disabled={isLoading}
+                disabled={isSavingSchedules}
               >
-                {isLoading ? 'Salvando...' : 'Salvar Plano Alimentar'}
+                {isSavingSchedules ? 'Salvando...' : t('save_feeding_plan')}
               </Button>
+
+              {/* Agendamentos Existentes */}
+              {schedules.length > 0 && (
+                <div className="space-y-2 mt-6 pt-6 border-t">
+                  <Label className="text-sm font-medium">{t('active_schedules')}</Label>
+                  <div className="space-y-2">
+                    {schedules.map(schedule => (
+                      <div 
+                        key={schedule.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {hourToMealTime[schedule.time] || schedule.time}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {schedule.amountGrams}g • {schedule.enabled ? t('active') : t('inactive')}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteSchedule(schedule.id)}
+                          className="p-1 hover:bg-secondary rounded-md transition-colors"
+                        >
+                          <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
