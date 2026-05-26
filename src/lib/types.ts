@@ -15,6 +15,7 @@ export interface Pet {
   activityLevel: ActivityLevel;
   feedingGoal: FeedingGoal;
   isNeutered?: boolean;
+  neuteredDate?: string;
   bodyCondition?: BodyCondition;
   breedFactor?: number;
   avatarEmoji: string;

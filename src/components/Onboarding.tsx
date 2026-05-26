@@ -17,12 +17,17 @@ type OnboardingStep = 'welcome' | 'pet' | 'feeder';
 
 export const Onboarding = ({ onComplete }: OnboardingProps) => {
   const [step, setStep] = useState<OnboardingStep>('welcome');
-  const [petData, setPetData] = useState<{ name: string; species: Species; age: string }>({ name: '', species: 'dog', age: '' });
+  const [petData, setPetData] = useState<{ name: string; species: Species; breed: string; age: string; isNeutered: boolean; neuteredDate: string }>({ name: '', species: 'dog', breed: '', age: '', isNeutered: false, neuteredDate: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleAddPet = async () => {
-    if (!petData.name || !petData.age) {
+    if (!petData.name || !petData.breed || !petData.age) {
       toast.error('Por favor, preencha todos os campos do pet');
+      return;
+    }
+
+    if (petData.isNeutered && !petData.neuteredDate) {
+      toast.error('Por favor, selecione a data de castração');
       return;
     }
 
@@ -31,11 +36,13 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
       await api.addPet({
         name: petData.name,
         species: petData.species,
-        breed: '',
+        breed: petData.breed,
         weight: 1,
-        age: Number(petData.age),
+        age: Number(petData.age) * 12,
         activityLevel: 'moderate',
         feedingGoal: 'maintenance',
+        isNeutered: petData.isNeutered,
+        neuteredDate: petData.isNeutered ? petData.neuteredDate : undefined,
       });
       toast.success(`${petData.name} adicionado com sucesso!`);
       setStep('feeder');
@@ -160,6 +167,17 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="pet-breed">Raça</Label>
+              <Input
+                id="pet-breed"
+                placeholder="Ex: Golden Retriever, Siamês"
+                value={petData.breed}
+                onChange={(e) => setPetData({ ...petData, breed: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="pet-age">Idade (anos)</Label>
               <Input
                 id="pet-age"
@@ -170,6 +188,45 @@ export const Onboarding = ({ onComplete }: OnboardingProps) => {
                 disabled={isLoading}
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>Castrado/Esterilizado?</Label>
+              <div className="flex gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={!petData.isNeutered}
+                    onChange={() => setPetData({ ...petData, isNeutered: false, neuteredDate: '' })}
+                    disabled={isLoading}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Não</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    checked={petData.isNeutered}
+                    onChange={() => setPetData({ ...petData, isNeutered: true })}
+                    disabled={isLoading}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Sim</span>
+                </label>
+              </div>
+            </div>
+
+            {petData.isNeutered && (
+              <div className="space-y-2">
+                <Label htmlFor="pet-neutered-date">Data de Castração</Label>
+                <Input
+                  id="pet-neutered-date"
+                  type="date"
+                  value={petData.neuteredDate}
+                  onChange={(e) => setPetData({ ...petData, neuteredDate: e.target.value })}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
 
             <div className="flex gap-2 pt-4">
               <Button 

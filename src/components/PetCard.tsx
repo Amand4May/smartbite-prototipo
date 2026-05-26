@@ -49,7 +49,12 @@ export function PetCard({ pet, selected, onClick, onDelete }: PetCardProps) {
             )}
           </div>
           <p className="text-sm text-muted-foreground">
-            {pet.breed} · {pet.age} {pet.age === 1 ? 'ano' : 'anos'}
+            {pet.breed} · {(() => {
+              const years = Math.floor(pet.age / 12);
+              const months = pet.age % 12;
+              if (months === 0) return `${years} ${years === 1 ? 'ano' : 'anos'}`;
+              return `${years} ${years === 1 ? 'ano' : 'anos'} e ${months} ${months === 1 ? 'mês' : 'meses'}`;
+            })()}
           </p>
           <div className="flex flex-wrap gap-1.5 mt-2">
             <span className="inline-flex items-center rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">

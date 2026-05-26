@@ -91,6 +91,7 @@ function toPet(data: any): Pet {
     activityLevel: data.activity_level,
     feedingGoal: data.feeding_goal,
     isNeutered: !!data.is_neutered,
+    neuteredDate: data.neutered_date,
     bodyCondition: data.body_condition,
     breedFactor: data.breed_factor ? Number(data.breed_factor) : 1.0,
     avatarEmoji: data.avatar_emoji,
@@ -109,6 +110,7 @@ function fromPet(pet: Omit<Pet, 'id' | 'avatarEmoji' | 'dailyRecommendedGrams' |
     activity_level: pet.activityLevel,
     feeding_goal: pet.feedingGoal,
     is_neutered: (pet as any).is_neutered ?? (pet as any).isNeutered ?? false,
+    neutered_date: pet.neuteredDate ? new Date(pet.neuteredDate).toISOString().split('T')[0] : null,
     body_condition: (pet as any).body_condition ?? (pet as any).bodyCondition ?? 'ideal',
     breed_factor: (pet as any).breed_factor ?? (pet as any).breedFactor ?? 1.0,
     avatar_emoji: pet.species === 'dog' ? '🐕' : '🐱',
@@ -217,6 +219,17 @@ export const api = {
     }
   },
 
+  async changePassword(oldPassword: string, newPassword: string, confirmPassword: string) {
+    await request('/auth/change-password/', {
+      method: 'POST',
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      }),
+    });
+  },
+
   getPets: async () => (await request<any[]>('/pets/')).map(toPet),
 
   addPet: async (pet: Omit<Pet, 'id' | 'avatarEmoji' | 'dailyRecommendedGrams' | 'createdAt'>) =>
@@ -233,6 +246,7 @@ export const api = {
         activity_level: updates.activityLevel,
         feeding_goal: updates.feedingGoal,
         is_neutered: (updates as any).isNeutered ?? (updates as any).is_neutered,
+        neutered_date: updates.neuteredDate ? updates.neuteredDate.split('T')[0] : null,
         body_condition: (updates as any).bodyCondition ?? (updates as any).body_condition,
         breed_factor: (updates as any).breedFactor ?? (updates as any).breed_factor,
       }),
@@ -284,6 +298,7 @@ export const api = {
     toSchedule(await request(`/pets/${schedule.petId}/schedules/`, {
       method: 'POST',
       body: JSON.stringify({
+        pet: schedule.petId,
         time: schedule.time,
         amount_grams: schedule.amountGrams,
         enabled: schedule.enabled,

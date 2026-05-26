@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { api, clearAuthToken } from '@/lib/api';
 import { Alert, DailyConsumption, FeederStatus, FeedingRecord, Pet } from '@/lib/types';
+import { initializeLanguage } from '@/lib/translations';
 import { PetCard } from '@/components/PetCard';
 import { FeederStatusCard } from '@/components/FeederStatusCard';
 import { AlertsPanel } from '@/components/AlertsPanel';
@@ -60,6 +61,21 @@ const Index = () => {
         }
       } catch (error) {
         localStorage.removeItem('user');
+      }
+    }
+    
+    // Carregar e aplicar tema salvo
+    const savedPreferences = localStorage.getItem('userPreferences');
+    if (savedPreferences) {
+      try {
+        const preferences = JSON.parse(savedPreferences);
+        if (preferences.theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (error) {
+        console.error('Erro ao carregar preferências:', error);
       }
     }
   }, []);
@@ -268,7 +284,7 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen pb-24 w-full overflow-x-hidden bg-white" key={refreshKey}>
+    <div className="min-h-screen pb-24 w-full overflow-x-hidden bg-background" key={refreshKey}>
       {renderHeader()}
 
       {/* Tabs */}

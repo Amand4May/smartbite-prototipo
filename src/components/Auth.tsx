@@ -34,16 +34,21 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     }
 
     setIsLoading(true);
-    // Simular delay de requisição
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      // Simular delay de requisição
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Simular login bem-sucedido
-    const user = await api.login(loginData.email, loginData.password);
+      // Simular login bem-sucedido
+      const user = await api.login(loginData.email, loginData.password);
 
-    localStorage.setItem('user', JSON.stringify(user));
-    toast.success('Login realizado com sucesso!');
-    onAuthSuccess(user);
-    setIsLoading(false);
+      localStorage.setItem('user', JSON.stringify(user));
+      toast.success('Login realizado com sucesso!');
+      onAuthSuccess(user);
+    } catch (error: any) {
+      toast.error(error.message || 'Email ou senha incorretos');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -65,22 +70,27 @@ export const Auth = ({ onAuthSuccess }: AuthProps) => {
     }
 
     setIsLoading(true);
-    // Simular delay de requisição
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      // Simular delay de requisição
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Simular cadastro bem-sucedido
-    const user = await api.register(
-      signupData.name,
-      signupData.email,
-      signupData.password,
-      signupData.confirmPassword,
-    );
+      // Simular cadastro bem-sucedido
+      const user = await api.register(
+        signupData.name,
+        signupData.email,
+        signupData.password,
+        signupData.confirmPassword,
+      );
 
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('onboarding', JSON.stringify({ completed: false, userId: user.id }));
-    toast.success('Cadastro realizado com sucesso!');
-    onAuthSuccess(user, { isNewAccount: true });
-    setIsLoading(false);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('onboarding', JSON.stringify({ completed: false, userId: user.id }));
+      toast.success('Cadastro realizado com sucesso!');
+      onAuthSuccess(user, { isNewAccount: true });
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao realizar cadastro');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
