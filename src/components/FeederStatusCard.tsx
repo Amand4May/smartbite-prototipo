@@ -27,7 +27,7 @@ export function FeederStatusCard({ status }: FeederStatusCardProps) {
       ? 'bg-[hsl(var(--warning))]'
       : 'bg-[hsl(var(--destructive))]';
 
-  const state = stateLabels[status.deviceState];
+  const state = processing; /*stateLabels[status.deviceState];*/
   const motor = motorLabels[status.motorStatus];
 
   return (
