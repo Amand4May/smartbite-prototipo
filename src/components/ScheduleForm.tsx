@@ -63,7 +63,7 @@ const handleSave = async () => {
 
   try {
     await fetch(
-      `https://alicac-774a2-default-rtdb.firebaseio.com/agendamentos/${schedule.id}.json`,
+      `https://alicac-774a2-default-rtdb.firebaseio.com/usuarios/agendamentos/${schedule.id}.json`,
       {
         method: 'PUT',
         headers: {
