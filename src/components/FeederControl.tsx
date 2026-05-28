@@ -74,23 +74,52 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
   };
 
   const handleManualFeed = async () => {
-    const err = validateAmount(manualAmount);
-    if (err) { setAmountError(err); return; }
+  const err = validateAmount(manualAmount);
+  if (err) { 
+    setAmountError(err); 
+    return; 
+  }
 
-    setFeedState('loading');
-    try {
-      await api.triggerManualFeed(selectedPet, manualAmount);
-      setTodayConsumed(prev => prev + manualAmount);
-      setFeedState('success');
-      toast.success(`${manualAmount}g liberados para ${pet?.name}!`);
-      onChanged?.();
-      setTimeout(() => setFeedState('idle'), 2500);
-    } catch (e: any) {
-      setFeedState('error');
-      toast.error(e.message || 'Erro ao liberar ração');
-      setTimeout(() => setFeedState('idle'), 3000);
-    }
-  };
+  setFeedState('loading');
+
+  try {
+    // ENVIA PARA O FIREBASE
+    await fetch(
+      'https://alicac-774a2-default-rtdb.firebaseio.com/manual.json',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: manualAmount,
+          petId: selectedPet,
+          timestamp: new Date().toISOString(),
+        }),
+      }
+    );
+
+    // SEU CÓDIGO ORIGINAL
+    await api.triggerManualFeed(selectedPet, manualAmount);
+
+    setTodayConsumed(prev => prev + manualAmount);
+    setFeedState('success');
+
+    toast.success(`${manualAmount}g liberados para ${pet?.name}!`);
+
+    onChanged?.();
+
+    setTimeout(() => setFeedState('idle'), 2500);
+
+  } catch (e: any) {
+
+    setFeedState('error');
+
+    toast.error(e.message || 'Erro ao liberar ração');
+
+    setTimeout(() => setFeedState('idle'), 3000);
+  }
+};
 
   const handleToggle = async (id: string) => {
     const schedule = schedules.find(s => s.id === id);
