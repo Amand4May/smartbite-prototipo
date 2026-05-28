@@ -19,9 +19,10 @@ interface ScheduleFormProps {
   onClose: () => void;
   onSave?: (schedule: Schedule) => void;
   initialData?: Schedule;
+  ownerName?: string;
 }
 
-export const ScheduleForm = ({ onClose, onSave, initialData }: ScheduleFormProps) => {
+export const ScheduleForm = ({ onClose, onSave, initialData, ownerName}: ScheduleFormProps) => {
   const [time, setTime] = useState(initialData?.time || '08:00');
   const [amount, setAmount] = useState(initialData?.amount || 150);
   const [selectedDays, setSelectedDays] = useState<string[]>(initialData?.days || ['Monday', 'Wednesday', 'Friday']);
@@ -63,7 +64,7 @@ const handleSave = async () => {
 
   try {
     await fetch(
-      `https://alicac-774a2-default-rtdb.firebaseio.com/usuarios/agendamentos/${schedule.id}.json`,
+      `https://alicac-774a2-default-rtdb.firebaseio.com/usuarios/${ownerName}/agendamentos/${schedule.id}.json`,
       {
         method: 'PUT',
         headers: {
