@@ -389,7 +389,7 @@ const Index = () => {
       </main>
 
       {showPetForm && <PetForm onClose={() => setShowPetForm(false)} onAdded={forceRefresh} />}
-      {showScheduleForm && <ScheduleForm onClose={() => setShowScheduleForm(false)} />}
+      {showScheduleForm && <ScheduleForm onClose={() => setShowScheduleForm(false)} ownerName={user?.name}/>}
     </div>
   );
 };
