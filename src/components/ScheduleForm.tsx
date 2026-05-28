@@ -45,30 +45,48 @@ export const ScheduleForm = ({ onClose, onSave, initialData }: ScheduleFormProps
     }
   };
 
-  const handleSave = async () => {
-    if (!time || amount <= 0 || selectedDays.length === 0) {
-      toast.error('Por favor, preencha todos os campos');
-      return;
-    }
+const handleSave = async () => {
+  if (!time || amount <= 0 || selectedDays.length === 0) {
+    toast.error('Por favor, preencha todos os campos');
+    return;
+  }
 
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+  setIsLoading(true);
 
-    const schedule: Schedule = {
-      id: initialData?.id || Math.random().toString(36).substr(2, 9),
-      time,
-      amount: parseInt(amount.toString()),
-      days: selectedDays,
-      enabled: true,
-    };
+  const schedule: Schedule = {
+    id: initialData?.id || Math.random().toString(36).substr(2, 9),
+    time,
+    amount: parseInt(amount.toString()),
+    days: selectedDays,
+    enabled: true,
+  };
+
+  try {
+    await fetch(
+      `https://alicac-774a2-default-rtdb.firebaseio.com/agendamentos/${schedule.id}.json`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(schedule),
+      }
+    );
 
     if (onSave) {
       onSave(schedule);
     }
+
     toast.success('Agendamento salvo com sucesso!');
-    setIsLoading(false);
     onClose();
-  };
+
+  } catch (error) {
+    console.error(error);
+    toast.error('Erro ao salvar no Firebase');
+  }
+
+  setIsLoading(false);
+};
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
