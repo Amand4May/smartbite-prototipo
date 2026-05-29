@@ -87,6 +87,7 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
     await fetch(
       'https://alicac-774a2-default-rtdb.firebaseio.com/manual.json',
       {
+          method: 'POST',
           amount: manualAmount,
           timestamp: new Date().toISOString(),
         }),
