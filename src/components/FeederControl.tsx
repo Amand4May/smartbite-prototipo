@@ -93,7 +93,6 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
         },
         body: JSON.stringify({
           amount: manualAmount,
-          petId: selectedPet,
           timestamp: new Date().toISOString(),
         }),
       }
