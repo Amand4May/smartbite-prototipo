@@ -89,7 +89,7 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
       {
           method: 'POST',
           qtd: manualAmount,
-          botao: true, 
+          botao: true 
         }),
       }
     );
