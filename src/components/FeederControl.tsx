@@ -85,11 +85,11 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
   try {
     // ENVIA PARA O FIREBASE
     await fetch(
-      'https://alicac-774a2-default-rtdb.firebaseio.com/manual.json',
+      'https://alicac-774a2-default-rtdb.firebaseio.com/usuarios/vinicius.json',
       {
           method: 'POST',
-          amount: manualAmount,
-          timestamp: new Date().toISOString(),
+          qtd: manualAmount,
+          botao: true, 
         }),
       }
     );
