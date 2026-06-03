@@ -92,7 +92,6 @@ export function FeederControl({ pets, onChanged }: FeederControlProps) {
           timestamp: new Date().toISOString(),
         }),
       }
-    );
 
     // SEU CÓDIGO ORIGINAL
     await api.triggerManualFeed(selectedPet, manualAmount);
